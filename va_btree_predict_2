@@ -1,0 +1,72 @@
+import json
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.metrics import mean_squared_error
+
+def load_data_from_json(file_path):
+    """
+    Carga los datos desde un archivo JSON y genera la matriz de características X y el vector objetivo y.
+    
+    Se asume que el JSON tiene la siguiente estructura:
+        {
+            "sm_mesh_training": [...],
+            "vacancias": [...],
+            "vecinos": [...],
+            "max_distancias": [...],
+            "min_distancias": [...]
+        }
+    
+    Puedes modificar la selección de características según tus necesidades.
+    """
+    with open(file_path, 'r') as f:
+        data = json.load(f)
+    
+    # Extraer cada lista de datos
+    sm_mesh_training = data["sm_mesh_training"]
+    vecinos = data["vecinos"]
+    max_distancias = data["max_distancias"]
+    min_distancias = data["min_distancias"]
+    
+    # Construir la matriz de características.
+    # En este ejemplo se usan 4 características: área, número de vecinos, máxima y mínima distancia.
+    X = np.array(list(zip(sm_mesh_training, vecinos, max_distancias, min_distancias)))
+    
+    # El vector objetivo (target) son las vacancias.
+    y = np.array(data["vacancias"])
+    
+    return X, y
+
+def main():
+    # Ruta al archivo JSON que contiene los datos.
+    file_path = "training_data.json"  # Cambia el nombre si es necesario
+    
+    # Cargar los datos
+    X, y = load_data_from_json(file_path)
+    print("Datos cargados:")
+    print("X shape:", X.shape)
+    print("y shape:", y.shape)
+    
+    # Dividir los datos en conjuntos de entrenamiento y prueba (80% entrenamiento, 20% prueba)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    
+    # Inicializar el modelo: en este ejemplo, un RandomForestRegressor
+    model = RandomForestRegressor(n_estimators=100, random_state=42)
+    
+    # Entrenar el modelo
+    model.fit(X_train, y_train)
+    print("Modelo entrenado.")
+    
+    # Realizar predicciones sobre el conjunto de prueba
+    y_pred = model.predict(X_test)
+    
+    # Calcular el error cuadrático medio (MSE) para evaluar el modelo
+    mse = mean_squared_error(y_test, y_pred)
+    print("Error Cuadrático Medio:", mse)
+    
+    # Mostrar predicciones y valores reales
+    print("Predicciones:", y_pred)
+    print("Valores reales:", y_test)
+
+if __name__ == "__main__":
+    main()
